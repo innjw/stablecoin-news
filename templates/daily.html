@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ subject }}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#1d1d1f;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f5f7;padding:24px 0;">
+<tr>
+<td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;max-width:600px;width:100%;">
+
+<!-- Header -->
+<tr>
+<td style="padding:32px 32px 16px 32px;border-bottom:1px solid #e5e5e7;">
+<div style="font-size:13px;color:#6e6e73;letter-spacing:0.5px;">{{ date_label }}</div>
+<h1 style="margin:8px 0 4px 0;font-size:24px;font-weight:700;color:#1d1d1f;">스테이블코인 데일리</h1>
+<div style="font-size:14px;color:#6e6e73;">오늘의 핵심 {{ total_count }}건</div>
+</td>
+</tr>
+
+{% if categories %}
+<!-- Categories -->
+{% for category, items in categories.items() %}
+<tr>
+<td style="padding:24px 32px 8px 32px;">
+<h2 style="margin:0;font-size:15px;font-weight:600;color:#0066cc;text-transform:uppercase;letter-spacing:1px;">{{ category }}</h2>
+</td>
+</tr>
+{% for article in items %}
+<tr>
+<td style="padding:12px 32px;">
+<div style="border-left:3px solid {% if article.importance >= 4 %}#ff3b30{% elif article.importance >= 3 %}#ff9500{% else %}#d2d2d7{% endif %};padding-left:14px;">
+<a href="{{ article.url }}" style="color:#1d1d1f;text-decoration:none;font-size:16px;font-weight:600;line-height:1.4;display:block;margin-bottom:6px;">{{ article.title }}</a>
+{% if article.llm_summary %}
+<div style="color:#424245;font-size:14px;line-height:1.5;margin-bottom:6px;">{{ article.llm_summary }}</div>
+{% endif %}
+<div style="font-size:12px;color:#86868b;">
+<span>{{ article.source }}</span>
+{% if article.published_at_str %}<span> · {{ article.published_at_str }}</span>{% endif %}
+{% if article.importance >= 4 %}<span style="color:#ff3b30;font-weight:600;"> · 중요</span>{% endif %}
+</div>
+</div>
+</td>
+</tr>
+{% endfor %}
+{% endfor %}
+{% else %}
+<tr>
+<td style="padding:48px 32px;text-align:center;color:#86868b;">
+<div style="font-size:15px;">오늘은 관련 뉴스가 수집되지 않았습니다.</div>
+</td>
+</tr>
+{% endif %}
+
+<!-- Footer -->
+<tr>
+<td style="padding:24px 32px;background-color:#fafafa;border-top:1px solid #e5e5e7;">
+<div style="font-size:12px;color:#86868b;line-height:1.6;">
+이 메일은 매일 아침 자동 발송됩니다. 모든 기사 링크는 원문 매체로 연결됩니다.<br>
+구독 해제 또는 문의: <a href="mailto:{{ reply_to }}" style="color:#0066cc;text-decoration:none;">{{ reply_to }}</a>
+</div>
+</td>
+</tr>
+
+</table>
+</td>
+</tr>
+</table>
+</body>
+</html>

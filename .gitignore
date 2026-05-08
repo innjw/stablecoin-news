@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.DS_Store
+*.log
+
+# 구독자 개인정보 - 퍼블릭 레포에 노출 금지
+subscribers.yaml
