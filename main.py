@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import sys
 from collections import defaultdict
 from datetime import datetime, timezone, timedelta
@@ -42,6 +43,29 @@ KST = timezone(timedelta(hours=9))
 def load_yaml(path: Path) -> dict:
     with open(path, encoding="utf-8") as f:
         return yaml.safe_load(f)
+
+
+def load_subscribers() -> dict:
+    """구독자 정보 로드.
+
+    우선순위:
+    1. SUBSCRIBERS_YAML 환경변수 (퍼블릭 레포 운영 시)
+    2. 로컬 subscribers.yaml 파일 (개발용)
+    """
+    env_yaml = os.environ.get("SUBSCRIBERS_YAML")
+    if env_yaml:
+        logger.info("구독자: 환경변수 SUBSCRIBERS_YAML 사용")
+        return yaml.safe_load(env_yaml)
+
+    path = ROOT / "subscribers.yaml"
+    if path.exists():
+        logger.info("구독자: subscribers.yaml 파일 사용")
+        return load_yaml(path)
+
+    raise RuntimeError(
+        "구독자 정보를 찾을 수 없음. SUBSCRIBERS_YAML 환경변수 또는 "
+        "subscribers.yaml 파일 중 하나가 필요합니다."
+    )
 
 
 def collect_all(sources: dict) -> list[Article]:
@@ -192,7 +216,7 @@ def render_html(articles: list[Article], reply_to: str) -> tuple[str, str]:
 
 def main() -> int:
     sources = load_yaml(ROOT / "sources.yaml")
-    subs_config = load_yaml(ROOT / "subscribers.yaml")
+    subs_config = load_subscribers()
 
     # 1. 수집
     articles = collect_all(sources)

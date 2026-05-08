@@ -33,6 +33,7 @@ jobs:
           NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          SUBSCRIBERS_YAML: ${{ secrets.SUBSCRIBERS_YAML }}
         run: python main.py
 
       - name: Commit sent URLs

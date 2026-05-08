@@ -1,0 +1,21 @@
+# 이 파일은 예시입니다.
+# 실제 사용 시: 이 파일을 subscribers.yaml로 복사 후 본인 정보로 수정.
+# 퍼블릭 레포에서 운영할 때는 이 파일 내용을 GitHub Secret(SUBSCRIBERS_YAML)에 통째로 등록.
+
+subscribers:
+  - name: "본인"
+    email: "your-email@example.com"
+    active: true
+
+  # 도메인 인증 전엔 본인(Resend 가입 이메일) 한 명만 발송 가능.
+  # 도메인 인증 후 가족/지인 추가:
+  # - name: "아내"
+  #   email: "spouse@example.com"
+  #   active: true
+
+sender:
+  from_name: "스테이블코인 데일리"
+  # 도메인 없을 때: Resend 테스트 발신자
+  from_email: "onboarding@resend.dev"
+  # 도메인 인증 후: noreply@your-domain.com 으로 변경
+  reply_to: "your-email@example.com"
