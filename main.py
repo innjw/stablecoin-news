@@ -252,6 +252,19 @@ def main() -> int:
     # 6. LLM 처리
     articles = enrich_with_llm(articles)
 
+    # LLM이 단 한 건도 처리 못 한 경우 (크레딧 부족, API 다운 등) 감지
+    llm_processed = sum(1 for a in articles if a.category)  # category 채워졌으면 처리됨
+    llm_failure = llm_processed == 0
+    if llm_failure:
+        logger.warning(
+            "LLM 처리 0건 — API 실패로 추정. fallback 모드로 발송 강행."
+        )
+        # fallback: 모든 기사 importance=2, category=기타로 강제
+        for a in articles:
+            a.importance = 2
+            a.category = "기타"
+            a.llm_summary = a.summary[:80] if a.summary else ""
+
     # 관련성 없다고 판단된 건 제거
     articles = [a for a in articles if a.is_relevant]
     logger.info("LLM 관련성 필터 후: %d건", len(articles))
@@ -260,12 +273,31 @@ def main() -> int:
         logger.info("LLM 처리 후 남은 기사 없음 — 발송 생략")
         return 0
 
-    # 중요도 1짜리는 제외 (가십 컷)
-    articles = [a for a in articles if a.importance >= 2]
+    # 진단용: importance 분포 출력
+    from collections import Counter
+    dist = Counter(a.importance for a in articles)
+    logger.info("importance 분포: %s", dict(sorted(dist.items())))
+
+    # 가십 컷 - importance 1만 제외 (단, 전체가 1뿐이면 전부 채택해서 발송은 함)
+    high_quality = [a for a in articles if a.importance >= 2]
+    if high_quality:
+        articles = high_quality
+        logger.info("importance >= 2 컷 적용: %d건", len(articles))
+    else:
+        logger.warning(
+            "전체 기사가 importance 1 — LLM 채점 비정상 가능성. "
+            "컷 미적용, 전체 발송"
+        )
 
     # 너무 많으면 상위 30개로 컷
     articles.sort(key=lambda x: -x.importance)
     articles = articles[:30]
+    logger.info("최종 발송 대상: %d건", len(articles))
+
+    # 0건이면 발송 생략 (빈 메일 방지)
+    if not articles:
+        logger.warning("최종 발송 대상 0건 — 발송 생략")
+        return 0
 
     # 7. 렌더링
     sender = subs_config["sender"]

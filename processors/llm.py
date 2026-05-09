@@ -44,20 +44,33 @@ JSON 외의 텍스트는 절대 출력하지 마세요."""
 
 
 def enrich_with_llm(articles: list[Article]) -> list[Article]:
-    """LLM으로 기사를 분류·요약·점수화. 원본 리스트를 in-place 갱신."""
+    """LLM으로 기사를 분류·요약·점수화. 원본 리스트를 in-place 갱신.
+
+    호출 실패한 배치의 기사는 importance=0 으로 남겨두어 후처리에서
+    걸러지도록 한다.
+    """
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         logger.warning("ANTHROPIC_API_KEY 미설정 — LLM 단계 건너뜀")
+        # 키 없으면 파이프라인 중단 신호로 모두 비관련 처리
+        for a in articles:
+            a.is_relevant = False
         return articles
 
     client = Anthropic(api_key=api_key)
 
+    total_batches = 0
+    failed_batches = 0
+    processed_ids: set[int] = set()  # 실제로 LLM이 응답한 기사의 인덱스
+
     for i in range(0, len(articles), BATCH_SIZE):
         batch = articles[i:i + BATCH_SIZE]
+        total_batches += 1
         try:
             results = _call_llm(client, batch)
         except Exception as e:
             logger.warning("LLM 호출 실패 (batch %d): %s", i, e)
+            failed_batches += 1
             continue
 
         for r in results:
@@ -69,9 +82,26 @@ def enrich_with_llm(articles: list[Article]) -> list[Article]:
             a.category = str(r.get("category", "기타"))
             a.importance = int(r.get("importance", 1))
             a.llm_summary = str(r.get("llm_summary", "")).strip()
+            processed_ids.add(id(a))
 
+    # LLM이 처리하지 못한 기사는 비관련 처리 (안전장치)
+    unprocessed = 0
+    for a in articles:
+        if id(a) not in processed_ids:
+            a.is_relevant = False
+            unprocessed += 1
+
+    if failed_batches:
+        logger.error(
+            "LLM 배치 실패: %d/%d (%d건 미처리)",
+            failed_batches, total_batches, unprocessed,
+        )
     relevant_count = sum(1 for a in articles if a.is_relevant)
-    logger.info("LLM 처리 완료: %d/%d 관련성 있음", relevant_count, len(articles))
+    logger.info(
+        "LLM 처리 완료: %d/%d 관련성 있음 (배치 %d/%d 성공)",
+        relevant_count, len(articles),
+        total_batches - failed_batches, total_batches,
+    )
     return articles
 
 
