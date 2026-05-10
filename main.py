@@ -302,7 +302,7 @@ def main() -> int:
 
     # 7. 렌더링
     sender = subs_config["sender"]
-    subject, html = render_html(articles, reply_to=sender["reply_to"])
+    subject, html, ordered_categories = render_html(articles, reply_to=sender["reply_to"])
 
     # 7-1. 블로그용 Markdown 생성
     try:
