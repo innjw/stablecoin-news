@@ -1,0 +1,100 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import FormattedDate from '../components/FormattedDate.astro';
+import Header from '../components/Header.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+
+const posts = (await getCollection('blog')).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+---
+
+<!doctype html>
+<html lang="ko">
+	<head>
+		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+		<style>
+			main {
+				width: 960px;
+				max-width: calc(100% - 2em);
+				margin: auto;
+				padding: 3em 1em;
+			}
+			.intro {
+				text-align: center;
+				margin-bottom: 3rem;
+			}
+			.intro h1 {
+				font-size: 2rem;
+				margin: 0 0 0.5rem 0;
+			}
+			.intro p {
+				color: rgb(var(--gray));
+				margin: 0;
+			}
+			ul {
+				display: flex;
+				flex-direction: column;
+				gap: 1.5rem;
+				list-style-type: none;
+				margin: 0;
+				padding: 0;
+			}
+			ul li {
+				border-bottom: 1px solid rgb(var(--gray-light));
+				padding-bottom: 1.5rem;
+			}
+			ul li:last-child {
+				border-bottom: none;
+			}
+			ul li a {
+				display: block;
+				text-decoration: none;
+				transition: 0.2s ease;
+			}
+			.title {
+				margin: 0 0 0.3rem 0;
+				color: rgb(var(--black));
+				font-size: 1.4rem;
+				line-height: 1.3;
+			}
+			.date {
+				margin: 0;
+				color: rgb(var(--gray));
+				font-size: 0.9rem;
+			}
+			ul li a:hover .title {
+				color: rgb(var(--accent));
+			}
+		</style>
+	</head>
+	<body>
+		<Header />
+		<main>
+			<div class="intro">
+				<h1>스테이블코인 데일리</h1>
+				<p>국내 스테이블코인 소식을 매일 정리합니다.</p>
+			</div>
+			<section>
+				<ul>
+					{
+						posts.map((post) => (
+							<li>
+								<a href={`/blog/${post.id}/`}>
+									<h2 class="title">{post.data.title}</h2>
+									<p class="date">
+										<FormattedDate date={post.data.pubDate} />
+									</p>
+								</a>
+							</li>
+						))
+					}
+				</ul>
+			</section>
+		</main>
+		<Footer />
+	</body>
+</html>

@@ -8,3 +8,6 @@ venv/
 
 # 구독자 개인정보 - 퍼블릭 레포에 노출 금지
 subscribers.yaml
+site/node_modules/
+site/dist/
+site/.astro/

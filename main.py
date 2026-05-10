@@ -29,6 +29,7 @@ from collectors import collect_google_news, collect_naver, collect_rss
 from models import Article
 from processors import dedupe, enrich_with_llm, filter_relevant, normalize_url
 from senders import send_email
+from senders.blog import publish_to_blog
 
 logging.basicConfig(
     level=logging.INFO,
@@ -211,7 +212,7 @@ def render_html(articles: list[Article], reply_to: str) -> tuple[str, str]:
         total_count=len(articles),
         reply_to=reply_to,
     )
-    return subject, html
+    return subject, html, ordered
 
 
 def main() -> int:
@@ -302,6 +303,13 @@ def main() -> int:
     # 7. 렌더링
     sender = subs_config["sender"]
     subject, html = render_html(articles, reply_to=sender["reply_to"])
+
+    # 7-1. 블로그용 Markdown 생성
+    try:
+        blog_path = publish_to_blog(ordered_categories, len(articles))
+        logger.info("블로그 글 생성: %s", blog_path)
+    except Exception as e:
+        logger.warning("블로그 글 생성 실패 (이메일 발송은 계속 진행): %s", e)
 
     # 8. 발송
     recipients = [
